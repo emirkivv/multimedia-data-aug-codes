@@ -1,0 +1,48 @@
+import os
+import cv2
+import random
+import matplotlib.pyplot as plt
+
+# Klasör yolları
+train_images = '/content/aug_data/aug_images'
+train_labels = '/content/aug_data/aug_labels'
+
+# Tüm görüntüleri al
+image_files = os.listdir(train_images)
+
+# Rastgele bir görüntü seç
+random_image = random.choice(image_files)
+
+# Görüntü ve etiket yolları
+image_path = os.path.join(train_images, random_image)
+label_file = os.path.splitext(random_image)[0] + ".txt"
+label_path = os.path.join(train_labels, label_file)
+
+# Görüntüyü yükle
+image = cv2.imread(image_path)
+
+# Eğer görüntü yüklenemediyse hata mesajı göster
+if image is None:
+    print(f"Hata: {image_path} yüklenemedi.")
+else:
+    # Etiketleri yükle
+    with open(label_path, "r") as f:
+        labels = f.read().strip().split("\n")
+
+    # Bbox'ları çiz
+    for label in labels:
+        if len(label.split()) != 5:
+            continue
+        class_id, x_center, y_center, width, height = map(float, label.split())
+        x_min = int((x_center - width / 2) * image.shape[1])
+        y_min = int((y_center - height / 2) * image.shape[0])
+        x_max = int((x_center + width / 2) * image.shape[1])
+        y_max = int((y_center + height / 2) * image.shape[0])
+
+        cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 3)
+
+    # Görüntüyü göster
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    ax.axis('off')
+    plt.show()
